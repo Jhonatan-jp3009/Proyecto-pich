@@ -1,0 +1,17 @@
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+statsbombpy
+ultralytics
+mediapipe
+pydantic
+aiohttp
+jupyter
+langchain
+langchain-google-genai
+python-dotenv
+langgraph
+dash
+plotly
