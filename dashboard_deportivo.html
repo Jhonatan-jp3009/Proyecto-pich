@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PICH: Consola de Inteligencia Táctica y Biomecánica</title>
+    <meta name="description" content="Consola táctica profesional y predictiva de IA para fútbol. Integración de StatsBomb, Metrica Sports, AutoSoccerPose y predictores de lesiones MDPI.">
+    <link rel="stylesheet" href="dashboard_styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar lateral -->
+        <aside>
+            <div class="logo-section">
+                <div class="logo-icon">P</div>
+                <div>
+                    <div class="logo-text">PICH</div>
+                    <div class="logo-sub">Sports AI Lab</div>
+                </div>
+            </div>
+
+            <!-- Menú interactivo de la Capa 4 -->
+            <nav class="menu-section">
+                <h4>Interfaces Capa 4</h4>
+                <ul class="menu-list">
+                    <li><button class="menu-item active" id="btn-tab-dashboard">📊 Dashboard Entrenador</button></li>
+                    <li><button class="menu-item" id="btn-tab-player-app">📱 App del Jugador</button></li>
+                    <li><button class="menu-item" id="btn-tab-training">📋 Planes de Entrenamiento</button></li>
+                    <li><button class="menu-item" id="btn-tab-alerts">🚨 Alertas de Riesgo</button></li>
+                </ul>
+            </nav>
+
+            <nav class="menu-section">
+                <h4>Fase de Desarrollo</h4>
+                <ul class="menu-list">
+                    <li><div class="menu-item" style="cursor: default; opacity: 0.8; font-family: var(--font-mono); font-size: 0.8rem;">Fase 2: Multi-Agente</div></li>
+                    <li><div class="menu-item" style="cursor: default; opacity: 0.8; font-family: var(--font-mono); font-size: 0.8rem;">Control Dinámico 100%</div></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Área Principal de Proyección -->
+        <main>
+            <!-- Cabecera principal (Un solo H1 por página - SEO) -->
+            <header>
+                <div class="header-title">
+                    <h1>SISTEMA DE INTELIGENCIA DEPORTIVA MULTI-AGENTE (PICH)</h1>
+                </div>
+                <div class="header-status">
+                    <div class="status-indicator">
+                        <div class="status-dot pulse"></div>
+                        <span id="status-text">Consola Online</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CONTENIDO 1: DASHBOARD DEL ENTRENADOR (Métricas + Alertas + Tracking + Biomecánica + Chat RAG) -->
+            <div class="tab-content active" id="tab-dashboard">
+                <section class="dashboard-grid" aria-label="Consola de Trabajo del Entrenador">
+                    
+                    <!-- Tarjeta 1.1: 2D Tracking Field (Metrica Sports) -->
+                    <article class="console-card span-8" id="card-tracking" aria-labelledby="title-tracking">
+                        <div class="card-header">
+                            <h3 id="title-tracking">🏃 Desplazamiento y Tracking 2D</h3>
+                            <span class="card-subtitle">Metrica Sports Tracking</span>
+                        </div>
+                        <div class="field-container">
+                            <canvas id="tracking-canvas" class="field-canvas"></canvas>
+                        </div>
+                        <div class="field-controls">
+                            <button class="btn-primary" id="btn-play-tracking">Iniciar Simulación Metrica</button>
+                        </div>
+                    </article>
+
+                    <!-- Tarjeta 1.2: Predictor de Lesiones en Tiempo Real (MDPI Paper) -->
+                    <article class="console-card span-4" id="card-physical" aria-labelledby="title-physical">
+                        <div class="card-header">
+                            <h3 id="title-physical">🩺 Predicción de Lesión No-Contacto</h3>
+                            <span class="card-subtitle">Algoritmo MDPI</span>
+                        </div>
+                        
+                        <!-- NUEVO SELECTOR DINÁMICO DE JUGADORES -->
+                        <div class="slider-group" style="margin-bottom: 4px;">
+                            <label for="player-selector" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">Monitorear Jugador:</label>
+                            <select id="player-selector" class="chat-input" style="padding: 8px 12px; font-family: var(--font-sans); font-weight: bold; color: var(--accent-volt); background: rgba(11, 15, 25, 0.9);">
+                                <!-- Se poblará dinámicamente mediante JS -->
+                            </select>
+                        </div>
+
+                        <div class="risk-indicator-wrapper">
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" width="130" height="130">
+                                    <circle class="gauge-track" cx="65" cy="65" r="60"></circle>
+                                    <circle class="gauge-fill" id="gauge-fill" cx="65" cy="65" r="60"></circle>
+                                </svg>
+                                <div class="gauge-percentage" id="gauge-text">0%</div>
+                            </div>
+                            <div class="risk-label-wrapper">
+                                <span class="risk-level-badge" id="risk-badge">Riesgo</span>
+                            </div>
+                        </div>
+
+                        <!-- Recomendación dinámica del Agente Físico -->
+                        <p class="risk-recommendation" id="risk-recommendation" style="font-size: 0.85rem; line-height: 1.4; color: var(--text-secondary);">
+                            Cargando recomendación del Agente...
+                        </p>
+
+                        <!-- Sliders de Control Físico -->
+                        <div class="sliders-grid">
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>ACWR (Relación de Carga Aguda:Crónica)</span>
+                                    <span class="slider-value" id="acwr-val">1.0</span>
+                                </div>
+                                <input type="range" id="acwr-slider" class="console-slider" min="0.5" max="2.5" step="0.05" value="1.1">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Deceleraciones Excéntricas</span>
+                                    <span class="slider-value" id="dec-val">80</span>
+                                </div>
+                                <input type="range" id="dec-slider" class="console-slider" min="10" max="300" step="5" value="80">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Aceleraciones de Alta Intensidad</span>
+                                    <span class="slider-value" id="acc-val">90</span>
+                                </div>
+                                <input type="range" id="acc-slider" class="console-slider" min="10" max="350" step="5" value="90">
+                            </div>
+                            <div class="slider-group">
+                                <div class="slider-label-row">
+                                    <span>Metros High-Speed Running (HSR)</span>
+                                    <span class="slider-value" id="hsr-val">350m</span>
+                                </div>
+                                <input type="range" id="hsr-slider" class="console-slider" min="100" max="1500" step="25" value="350">
+                            </div>
+                            <label class="checkbox-group" for="prev-injury-checkbox">
+                                <input type="checkbox" id="prev-injury-checkbox">
+                                <span>Historial de Lesiones Previas (0/1)</span>
+                            </label>
+                        </div>
+                    </article>
+
+                    <!-- Tarjeta 1.3: Visor Biomecánico 3D (AutoSoccerPose) -->
+                    <article class="console-card span-4" id="card-biomech" aria-labelledby="title-biomech">
+                        <div class="card-header">
+                            <h3 id="title-biomech">🦴 Visor Biomecánico 3D de Tiros</h3>
+                            <span class="card-subtitle">AutoSoccerPose 3D</span>
+                        </div>
+                        <div class="biomech-canvas-wrapper">
+                            <canvas id="biomech-canvas" class="biomech-canvas"></canvas>
+                            <div class="biomech-angle-overlay" aria-live="polite">
+                                <span>Ángulo Rodilla: <span class="angle-val" id="knee-angle-val">120°</span></span>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.8rem; text-align: center; color: var(--text-secondary);">
+                            Arrastra sobre el canvas para rotar el esqueleto en 3D
+                        </p>
+                    </article>
+
+                    <!-- Tarjeta 1.4: Terminal del Agente de IA (RAG Chat) -->
+                    <article class="console-card span-8" id="card-chat" aria-labelledby="title-chat">
+                        <div class="card-header">
+                            <h3 id="title-chat">💬 Terminal del Agente IA (Orquestador Multi-Agente)</h3>
+                            <span class="card-subtitle">Decisión ReAct</span>
+                        </div>
+                        <div class="chat-container">
+                            <div class="chat-history" id="chat-history">
+                                <div class="chat-msg agent">
+                                    <span class="msg-sender orchestrator">Cerebro Orquestador</span>
+                                    <p>Consola Táctica activa. Estoy conectado con los agentes **Físico (MDPI)**, **Táctico (StatsBomb)** y **Nutricional**. ¿En qué análisis táctico-físico te puedo asistir hoy?</p>
+                                </div>
+                            </div>
+
+                            <div class="quick-prompts-row" aria-label="Accesos Rápidos al Chat">
+                                <button class="quick-prompt-btn" onclick="triggerQuickPrompt('Analizar sobrecarga y riesgo de lesion en el entrenamiento actual')">🩺 Carga Física y Lesiones</button>
+                                <button class="quick-prompt-btn" onclick="triggerQuickPrompt('Diseñar sesión de recuperación nutricional')">🍏 Plan Nutricional</button>
+                                <button class="quick-prompt-btn" onclick="triggerQuickPrompt('Revisar táctica de tiros libres en StatsBomb')">📊 Táctica de Tiros Libres</button>
+                            </div>
+
+                            <div class="chat-input-row">
+                                <input type="text" class="chat-input" id="chat-input" placeholder="Pregunta algo al Agente de IA..." aria-label="Pregunta al Agente de IA">
+                                <button class="btn-primary" id="chat-btn" aria-label="Enviar pregunta">Preguntar</button>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+            </div>
+
+            <!-- CONTENIDO 2: APP DEL JUGADOR (Retroalimentación Personalizada Mock Dinámica) -->
+            <div class="tab-content" id="tab-player-app">
+                <section class="dashboard-grid" aria-label="Interfaz de la App Personal del Jugador">
+                    <article class="console-card span-6">
+                        <div class="card-header">
+                            <h3>📱 Dispositivo Móvil del Jugador</h3>
+                            <span class="card-subtitle">Mockup de la App Móvil</span>
+                        </div>
+                        <div class="player-app-mockup">
+                            <div class="player-app-header">
+                                <div class="player-profile-row">
+                                    <!-- Datos dinámicos cargados en JS -->
+                                    <div class="player-avatar" id="app-player-avatar">10</div>
+                                    <div>
+                                        <div style="font-weight: bold; color: #fff; font-size: 0.95rem;" id="app-player-name">Lionel Messi</div>
+                                        <div style="font-size: 0.75rem; color: var(--accent-volt);" id="app-player-position">Extremo Derecho / Mediapunta</div>
+                                    </div>
+                                </div>
+                                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-volt);">ONLINE</span>
+                            </div>
+
+                            <!-- Estado Físico Directo -->
+                            <div class="player-app-card">
+                                <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Estado Semanal</div>
+                                <div style="font-size: 1.1rem; font-weight: bold; color: #fff; margin-bottom: 6px;">Carga de Entrenamiento</div>
+                                <div class="player-metrics-grid">
+                                    <div class="player-metric-subcard">
+                                        <span style="font-size: 0.75rem; color: var(--text-secondary);">ACWR</span>
+                                        <span class="player-metric-val" id="player-acwr-metric">1.10</span>
+                                    </div>
+                                    <div class="player-metric-subcard">
+                                        <span style="font-size: 0.75rem; color: var(--text-secondary);">Riesgo Estimado</span>
+                                        <span class="player-metric-val" id="player-risk-metric" style="color: var(--accent-volt);">BAJO</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Prescripción Adaptativa del Coach IA -->
+                            <div class="player-app-card">
+                                <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Prescripción del Coach IA</div>
+                                <p id="player-coach-advice" style="font-size: 0.85rem; line-height: 1.4; color: var(--text-primary);">
+                                    Estás en tu zona óptima de entrenamiento. Mantén la rutina y asegura 8 horas de sueño.
+                                </p>
+                            </div>
+
+                            <!-- Métricas de Bienestar Reportadas -->
+                            <div class="player-app-card">
+                                <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Bienestar Diario</div>
+                                <div class="player-metrics-grid">
+                                    <div class="player-metric-subcard">
+                                        <span style="font-size: 0.7rem; color: var(--text-secondary);">Horas de Sueño</span>
+                                        <span class="player-metric-val" id="app-player-sleep">8.2 hrs</span>
+                                    </div>
+                                    <div class="player-metric-subcard">
+                                        <span style="font-size: 0.7rem; color: var(--text-secondary);">Dolor Muscular</span>
+                                        <span class="player-metric-val" id="app-player-soreness" style="color: var(--accent-warning);">2 / 10</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Tarjeta 2.2: Rationale del Analista -->
+                    <article class="console-card span-6">
+                        <div class="card-header">
+                            <h3>💡 Explicación del Analista: App del Jugador</h3>
+                            <span class="card-subtitle">Valor Práctico</span>
+                        </div>
+                        <p style="line-height: 1.6; font-size: 0.95rem; color: var(--text-secondary);">
+                            La **App del Jugador** cierra el ciclo de retroalimentación de la **Capa 4**. En lugar de que los datos de los sensores GPS y los análisis tácticos se queden únicamente en la oficina del entrenador, esta vista móvil entrega al futbolista información digerible y recomendaciones autónomas generadas por el **Agente Físico y Nutricional**.
+                        </p>
+                        <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 10px; font-size: 0.92rem; color: var(--text-primary); margin-top: 10px;">
+                            <li><strong>Consumo de Datos Dinámico:</strong> Los datos del ACWR y los frenados del jugador alimentan de inmediato su aplicación.</li>
+                            <li><strong>Autonomía en Cuidado:</strong> Ofrece alertas de hidratación y guías adaptativas basadas en la fatiga real calculada por la fórmula del paper de MDPI.</li>
+                        </ul>
+                    </article>
+                </section>
+            </div>
+
+            <!-- CONTENIDO 3: PLANES DE ENTRENAMIENTO (Sesiones Adaptativas) -->
+            <div class="tab-content" id="tab-training-plans">
+                <section class="dashboard-grid" aria-label="Planes de Entrenamiento Adaptativos">
+                    <article class="console-card span-12">
+                        <div class="card-header">
+                            <h3>📋 Planes de Entrenamiento y Sesiones Adaptativas</h3>
+                            <span class="card-subtitle">Prescripción de Carga por IA</span>
+                        </div>
+                        <p style="font-size: 0.95rem; color: var(--text-secondary);">
+                            El sistema evalúa el estado del jugador a través de sus métricas físicas acumuladas y genera una **sesión de entrenamiento adaptada** para prevenir lesiones de no-contacto.
+                        </p>
+
+                        <div class="training-deck" id="training-deck-container">
+                            <!-- Tarjeta de Plan 1 -->
+                            <div class="training-plan-card">
+                                <span class="plan-intensity baja">Baja Intensidad</span>
+                                <h4 style="font-size: 1.2rem; color: #fff;">Plan A: Recuperación y Adaptación Excéntrica</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary);">Recomendado para jugadores en zona de riesgo moderada/alta. Reduce el volumen de desaceleraciones drásticas.</p>
+                                <ul class="plan-drill-list">
+                                    <li class="plan-drill-item"><span>Calentamiento: Movilidad articular activa</span> <span class="slider-value">15 min</span></li>
+                                    <li class="plan-drill-item"><span>Drill 1: Trotar a baja velocidad e hidroterapia</span> <span class="slider-value">20 min</span></li>
+                                    <li class="plan-drill-item"><span>Recuperación: Estiramiento miofascial</span> <span class="slider-value">10 min</span></li>
+                                </ul>
+                            </div>
+
+                            <!-- Tarjeta de Plan 2 -->
+                            <div class="training-plan-card">
+                                <span class="plan-intensity media">Media Intensidad</span>
+                                <h4 style="font-size: 1.2rem; color: #fff;">Plan B: Carga Estabilizadora</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary);">Adecuado para mantenimiento físico en zona segura. Sesión balanceada de sprints y pase táctico.</p>
+                                <ul class="plan-drill-list">
+                                    <li class="plan-drill-item"><span>Calentamiento: Activación neuromuscular</span> <span class="slider-value">15 min</span></li>
+                                    <li class="plan-drill-item"><span>Drill 1: Rondos en espacio reducido a 1 toque</span> <span class="slider-value">25 min</span></li>
+                                    <li class="plan-drill-item"><span>Drill 2: Saltos pliométricos controlados</span> <span class="slider-value">15 min</span></li>
+                                </ul>
+                            </div>
+
+                            <!-- Tarjeta de Plan 3 -->
+                            <div class="training-plan-card">
+                                <span class="plan-intensity alta">Alta Intensidad</span>
+                                <h4 style="font-size: 1.2rem; color: #fff;">Plan C: Sobrecarga Progresiva</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary);">Para jugadores con ACWR bajo 1.1 y excelente forma física. Estimula velocidad máxima de HSR.</p>
+                                <ul class="plan-drill-list">
+                                    <li class="plan-drill-item"><span>Calentamiento: Piques explosivos</span> <span class="slider-value">15 min</span></li>
+                                    <li class="plan-drill-item"><span>Drill 1: Transiciones ofensivas rápidas 5v5</span> <span class="slider-value">30 min</span></li>
+                                    <li class="plan-drill-item"><span>Drill 2: Práctica de tiros al arco con oposición</span> <span class="slider-value">20 min</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+            </div>
+
+            <!-- CONTENIDO 4: ALERTAS DE RIESGO (Consola Roster Central Dinámica) -->
+            <div class="tab-content" id="tab-risk-alerts">
+                <section class="dashboard-grid" aria-label="Central de Alertas de Riesgo del Plantel">
+                    <article class="console-card span-12">
+                        <div class="card-header">
+                            <h3>🚨 Consola de Alertas del Plantel de Jugadores</h3>
+                            <span class="card-subtitle">Monitoreo Médico y Fisiológico</span>
+                        </div>
+                        <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 12px;">
+                            Lista de monitoreo preventivo de todos los jugadores de la plantilla activa basada en el cálculo dinámico en tiempo real de su carga física. **Haz clic en cualquier fila para seleccionar y editar sus parámetros.**
+                        </p>
+
+                        <div class="alerts-table-wrapper">
+                            <table class="alerts-table">
+                                <thead>
+                                    <tr>
+                                        <th>Jugador</th>
+                                        <th>Posición</th>
+                                        <th>ACWR</th>
+                                        <th>Deceleraciones</th>
+                                        <th>Mts HSR</th>
+                                        <th>Prob. Lesión</th>
+                                        <th>Estado de Alerta</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alerts-table-body">
+                                    <!-- Se renderizará de forma dinámica en JS para soportar cualquier cantidad de jugadores -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </section>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="dashboard_logic.js"></script>
+</body>
+</html>
