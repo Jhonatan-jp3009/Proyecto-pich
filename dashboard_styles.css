@@ -265,7 +265,7 @@ header {
 .field-container {
     position: relative;
     width: 100%;
-    height: 320px;
+    /* height se adapta al canvas hijo */
     background: #061910;
     background-image: 
         radial-gradient(circle, rgba(6, 40, 22, 0.6) 0%, transparent 90%);
@@ -273,12 +273,15 @@ header {
     border: 2px solid rgba(255, 255, 255, 0.15);
     overflow: hidden;
     box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
+    display: flex;
+    justify-content: center;
 }
 
 .field-canvas {
-    width: 100%;
-    height: 100%;
+    /* No sobreescribir el tamaño lógico del canvas: el JS gestiona width/height directamente */
     display: block;
+    max-width: 100%;
+    height: auto;
 }
 
 .field-controls {
@@ -470,17 +473,20 @@ header {
 .biomech-canvas-wrapper {
     position: relative;
     width: 100%;
-    height: 250px;
+    /* altura se adapta al canvas */
     background: #060912;
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     overflow: hidden;
+    display: flex;
+    justify-content: center;
 }
 
 .biomech-canvas {
-    width: 100%;
-    height: 100%;
+    /* No sobreescribir el tamaño lógico del canvas */
     display: block;
+    max-width: 100%;
+    height: auto;
 }
 
 .biomech-angle-overlay {

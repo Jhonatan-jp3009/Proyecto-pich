@@ -11,14 +11,16 @@ document.addEventListener("DOMContentLoaded", () => {
     let startX = 0;
 
     // ── 1. BASE DE DATOS DINÁMICA DEL PLANTEL (SQUAD DATABASE) ──
+    // Features alineados con el modelo Random Forest del notebook (MDPI Paper):
+    // edad, peso, lesion_previa, tiempo_entrenamiento, aceleraciones, deceleraciones, hsr_distancia, acwr
     const squad = [
-        { id: 10, name: "Lionel Messi", position: "Extremo Derecho / Mediapunta", avatar: "10", acwr: 1.10, dec: 80, acc: 90, hsr: 350, prevInjury: false, sleep: 8.2, soreness: 2 },
-        { id: 9, name: "Luis Suárez", position: "Delantero Centro", avatar: "9", acwr: 1.55, dec: 210, acc: 185, hsr: 850, prevInjury: true, sleep: 7.1, soreness: 6 },
-        { id: 5, name: "Sergio Busquets", position: "Pivote Organizador", avatar: "5", acwr: 1.20, dec: 95, acc: 75, hsr: 120, prevInjury: false, sleep: 7.9, soreness: 3 },
-        { id: 18, name: "Jordi Alba", position: "Lateral Izquierdo", avatar: "18", acwr: 1.42, dec: 190, acc: 220, hsr: 1100, prevInjury: false, sleep: 8.0, soreness: 4 },
-        { id: 21, name: "Frenkie de Jong", position: "Mediocentro Mixto", avatar: "21", acwr: 1.15, dec: 140, acc: 160, hsr: 750, prevInjury: false, sleep: 8.4, soreness: 1 },
-        { id: 1, name: "M. ter Stegen", position: "Portero", avatar: "1", acwr: 0.85, dec: 30, acc: 40, hsr: 50, prevInjury: false, sleep: 8.5, soreness: 0 },
-        { id: 8, name: "Pedri González", position: "Mediocentro Creativo", avatar: "8", acwr: 1.65, dec: 230, acc: 195, hsr: 980, prevInjury: true, sleep: 6.8, soreness: 7 }
+        { id: 10, name: "Lionel Messi",    position: "Extremo Derecho / Mediapunta", avatar: "10", edad: 36, peso: 72, acwr: 1.10, dec: 80,  acc: 90,  hsr: 350,  prevInjury: false, trainTime: 210, sleep: 8.2, soreness: 2 },
+        { id: 9,  name: "Luis Suárez",     position: "Delantero Centro",            avatar: "9",  edad: 37, peso: 86, acwr: 1.55, dec: 210, acc: 185, hsr: 850,  prevInjury: true,  trainTime: 390, sleep: 7.1, soreness: 6 },
+        { id: 5,  name: "Sergio Busquets", position: "Pivote Organizador",          avatar: "5",  edad: 35, peso: 76, acwr: 1.20, dec: 95,  acc: 75,  hsr: 120,  prevInjury: false, trainTime: 185, sleep: 7.9, soreness: 3 },
+        { id: 18, name: "Jordi Alba",       position: "Lateral Izquierdo",           avatar: "18", edad: 34, peso: 70, acwr: 1.42, dec: 190, acc: 220, hsr: 1100, prevInjury: false, trainTime: 360, sleep: 8.0, soreness: 4 },
+        { id: 21, name: "Frenkie de Jong",  position: "Mediocentro Mixto",           avatar: "21", edad: 26, peso: 74, acwr: 1.15, dec: 140, acc: 160, hsr: 750,  prevInjury: false, trainTime: 270, sleep: 8.4, soreness: 1 },
+        { id: 1,  name: "M. ter Stegen",   position: "Portero",                     avatar: "1",  edad: 31, peso: 85, acwr: 0.85, dec: 30,  acc: 40,  hsr: 50,   prevInjury: false, trainTime: 150, sleep: 8.5, soreness: 0 },
+        { id: 8,  name: "Pedri González",  position: "Mediocentro Creativo",        avatar: "8",  edad: 21, peso: 68, acwr: 1.65, dec: 230, acc: 195, hsr: 980,  prevInjury: true,  trainTime: 420, sleep: 6.8, soreness: 7 }
     ];
 
     let selectedPlayerId = 10;
@@ -113,6 +115,22 @@ document.addEventListener("DOMContentLoaded", () => {
         biomechCanvas.height = 250;
     }
 
+    // Sincronizar tamaño lógico del tracking canvas con el contenedor real
+    function resizeTrackingCanvas() {
+        if (!trackingCanvas) return;
+        const container = trackingCanvas.parentElement;
+        if (!container) return;
+        const containerWidth = container.clientWidth;
+        if (containerWidth > 0) {
+            const ratio = 320 / 600;
+            trackingCanvas.width = containerWidth;
+            trackingCanvas.height = Math.round(containerWidth * ratio);
+        }
+    }
+
+    resizeTrackingCanvas();
+    window.addEventListener("resize", resizeTrackingCanvas);
+
     // ── 2. NAVEGACIÓN POR PESTAÑAS (SPA) ──
     const tabs = [
         { btn: document.getElementById("btn-tab-dashboard"), content: document.getElementById("tab-dashboard") },
@@ -187,14 +205,39 @@ document.addEventListener("DOMContentLoaded", () => {
         prevInjuryCheckbox.addEventListener("change", calculateInjuryRisk);
     }
 
-    // ── 4. CÁLCULO DE RIESGO E INTEGRACIÓN MULTI-TAB ──
-    function getFormulaRisk(acwr, dec, hsr, prevInjury) {
+    // ── 4. CÁLCULO DE RIESGO ALINEADO CON EL MODELO RF DEL NOTEBOOK (8 features MDPI) ──
+    // Features: acwr, deceleraciones, aceleraciones, hsr, lesion_previa, edad, peso, tiempo_entrenamiento
+    // Importancias del RF (notebook cell 18): acwr > dec > hsr > acc > lesion_previa > tiempo > peso > edad
+    function getFormulaRisk(acwr, dec, hsr, acc, prevInjury, edad, peso, trainTime) {
         let baseProb = 0.03;
-        if (acwr > 1.5) baseProb += 0.38;
-        else if (acwr < 0.7) baseProb += 0.12;
-        if (dec > 180) baseProb += 0.18;
-        if (hsr > 900 && acwr > 1.4) baseProb += 0.22;
-        if (prevInjury) baseProb += 0.15;
+
+        // 1. ACWR — mayor importancia según el paper MDPI y el RF del notebook
+        if      (acwr > 1.5)  baseProb += 0.42;  // Danger Zone clásica
+        else if (acwr > 1.3)  baseProb += 0.18;
+        else if (acwr < 0.7)  baseProb += 0.10;  // Sub-carga también es riesgo (sub-preparación)
+
+        // 2. Deceleraciones excéntricas — 2° predictor en importancia del RF
+        if      (dec > 200)   baseProb += 0.20;
+        else if (dec > 150)   baseProb += 0.10;
+
+        // 3. HSR (High-Speed Running) + ACWR combinados — sinergia detectada por el RF
+        if (hsr > 900 && acwr > 1.3)  baseProb += 0.22;
+        else if (hsr > 700)            baseProb += 0.07;
+
+        // 4. Aceleraciones de alta intensidad — 4° predictor (incluido en el modelo RF)
+        if      (acc > 250)   baseProb += 0.12;
+        else if (acc > 180)   baseProb += 0.06;
+
+        // 5. Lesión previa — factor binario con peso directo según MDPI
+        if (prevInjury)       baseProb += 0.15;
+
+        // 6. Tiempo de entrenamiento semanal acumulado (trainTime en minutos)
+        if (trainTime > 380)  baseProb += 0.08;
+        else if (trainTime > 300) baseProb += 0.04;
+
+        // 7. Edad — contribución menor según el RF (jugadores > 33 tienen mayor riesgo recuperación)
+        if (edad > 33)        baseProb += 0.05;
+
         return Math.min(Math.max(baseProb, 0.01), 0.99);
     }
 
@@ -213,7 +256,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const p = squad.find(player => player.id === selectedPlayerId);
         if (p) { p.acwr = acwr; p.acc = acc; p.dec = dec; p.hsr = hsr; p.prevInjury = prevInjury; }
 
-        const finalProb = getFormulaRisk(acwr, dec, hsr, prevInjury);
+        // Llamar con los 8 features alineados con el modelo RF del notebook
+        const finalProb = getFormulaRisk(acwr, dec, hsr, acc, prevInjury, p ? p.edad : 25, p ? p.peso : 75, p ? p.trainTime : 240);
         const percentage = Math.round(finalProb * 100);
 
         const circumference = 377;
@@ -277,7 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alertsTableBody.innerHTML = "";
 
         squad.forEach(p => {
-            const prob = getFormulaRisk(p.acwr, p.dec, p.hsr, p.prevInjury);
+            const prob = getFormulaRisk(p.acwr, p.dec, p.hsr, p.acc, p.prevInjury, p.edad, p.peso, p.trainTime);
             const percentage = Math.round(prob * 100);
             let riskText = "Bajo";
             let riskClass = "low";
@@ -535,15 +579,39 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ── 7. MOTOR CONVERSACIONAL DE AGENTE DE IA (RAG) ──
+    // ── 7. MOTOR CONVERSACIONAL MULTI-AGENTE (ReAct / LangGraph Simulator) ──
+
+    // Respuestas contextuales dinámicas por agente, usando datos reales del jugador seleccionado
+    function getAgentLines(agentKey, p, gaugeVal) {
+        if (agentKey === "fisico") return [
+            `📡 Leyendo telemetría GPS de ${p.name}... ACWR actual: ${p.acwr.toFixed(2)} (Relación Carga Aguda:Crónica).`,
+            `🔬 Modelo LSTM detecta ${p.dec} deceleraciones excéntricas y ${p.acc} aceleraciones de alta intensidad. Tiempo total semanal: ${p.trainTime} min.`,
+            `⚠️ Riesgo de lesión no-contacto (Modelo RF/MDPI): ${gaugeVal}. ${p.prevInjury ? "Historial de lesión previa activo — Protocolo de alerta iniciado." : "Sin antecedentes de lesión registrados."}`
+        ];
+        if (agentKey === "tactico") return [
+            `🗺️ Consultando base de datos StatsBomb para ${p.name} en posición: ${p.position}...`,
+            `📊 Con ACWR=${p.acwr.toFixed(2)}, la tasa de pases clave cae aproximadamente un ${Math.round(Math.abs(p.acwr - 1) * 18)}% respecto al baseline óptimo del jugador. HSR acumulado (${p.hsr}m) reduce los cambios de dirección efectivos.`,
+            `🎯 Recomendación táctica: ${p.acwr > 1.4 ? `Reubicar a ${p.name} en un rol de menor pressing. Evitar transiciones largas de campo en este microciclo.` : `${p.name} puede ejecutar su rol habitual con presión alta. Rendimiento táctico esperado: normal.`}`
+        ];
+        if (agentKey === "nutricional") return [
+            `🥗 Calculando protocolo nutricional para ${p.name} (${p.peso} kg, ${p.edad} años)...`,
+            `💊 Gasto calórico estimado por GPS: ${Math.round(p.hsr * 0.08 + p.dec * 2)} kcal adicionales. Se requiere recarga de carbohidratos complejos y proteínas de alto valor biológico.`,
+            `💧 Prescripción: ${p.acwr > 1.4
+                ? `Batido de recuperación (BCAA 6g + carbohidratos 45g) en los próximos 30 min. Hidratación isotónica: ${Math.round(p.peso * 0.035 * 1000)}ml en 2 horas.`
+                : `Alimentación post-entrenamiento estándar. Hidratación base: ${Math.round(p.peso * 0.03 * 1000)}ml.`}`
+        ];
+        return [];
+    }
+
+    // Agregar un mensaje al historial del chat
     function appendMessage(sender, text, role) {
         const msgDiv = document.createElement("div");
         msgDiv.className = `chat-msg ${role}`;
 
         let senderClass = "orchestrator";
-        if (sender.toLowerCase().includes("físico")) senderClass = "physical";
+        if (sender.toLowerCase().includes("físico"))  senderClass = "physical";
         if (sender.toLowerCase().includes("táctico")) senderClass = "tactical";
-        if (sender.toLowerCase().includes("nutri")) senderClass = "nutrition";
+        if (sender.toLowerCase().includes("nutri"))   senderClass = "nutrition";
         if (sender.toLowerCase().includes("usuario")) senderClass = "user";
 
         msgDiv.innerHTML = `<span class="msg-sender ${senderClass}">${sender}</span><p>${text}</p>`;
@@ -551,30 +619,69 @@ document.addEventListener("DOMContentLoaded", () => {
         chatHistory.scrollTop = chatHistory.scrollHeight;
     }
 
+    // Enviar líneas de un agente en secuencia, con delay entre cada una
+    function sequentialAppend(sender, lines, role, startDelay, onDone) {
+        lines.forEach((line, i) => {
+            setTimeout(() => {
+                appendMessage(sender, line, role);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+                if (i === lines.length - 1 && onDone) onDone();
+            }, startDelay + i * 980);
+        });
+    }
+
+    // Detectar qué dominios toca la consulta del usuario
+    function detectDomains(q) {
+        const qL = q.toLowerCase();
+        const d = {
+            fisico:      /lesion|carga|físico|acwr|fatig|sprint|deceler|hsr|gps|muscul|sobrecarga|sensor/.test(qL),
+            tactico:     /tácti|táctica|pase|statsbomb|posici|pressing|transici|ataque|defens|formaci|juego/.test(qL),
+            nutricional: /nutri|dieta|carbohid|proteín|hidrat|bcaa|calor|recuper|comida|sueño|alimenta/.test(qL)
+        };
+        // Si la consulta pide análisis general o no encaja en ningún dominio → activar los 3
+        if (!d.fisico && !d.tactico && !d.nutricional ||
+            /todo|completo|todos|general|resumen|análisis|informe|estado del jugador/.test(qL)) {
+            d.fisico = d.tactico = d.nutricional = true;
+        }
+        return d;
+    }
+
     function processAgentQuery(query) {
         appendMessage("Usuario", query, "user");
 
+        const p = squad.find(player => player.id === selectedPlayerId);
+        const d = detectDomains(query);
+        const active = ["fisico", "tactico", "nutricional"].filter(k => d[k]);
+
+        // Mensaje del Orquestador: informa qué agentes se van a activar
+        const agentLabels = { fisico: "Físico (LSTM/MDPI)", tactico: "Táctico (StatsBomb)", nutricional: "Nutricional" };
+        const labelList = active.map(k => agentLabels[k]).join(" → ");
+        const opening = active.length >= 2
+            ? `🔗 Consulta multi-dominio detectada. Activando ${active.length} agentes: ${labelList}. Iniciando grafo de decisión ReAct...`
+            : `Solicitud procesada. Dirigiendo al agente: ${labelList}.`;
+
         setTimeout(() => {
-            appendMessage("Cerebro Orquestador", "Solicitud ruteada con éxito. Ejecutando agentes del grafo...", "agent");
+            appendMessage("Cerebro Orquestador", opening, "agent");
 
+            // Programar las respuestas de cada agente en secuencia sin solapamiento
+            const PER_LINE = 980;
+            let cumulativeDelay = 1400;
+
+            active.forEach(agentKey => {
+                const lines = getAgentLines(agentKey, p, gaugeText ? gaugeText.textContent : "N/A");
+                const label = agentLabels[agentKey];
+                sequentialAppend(label, lines, "agent", cumulativeDelay, null);
+                cumulativeDelay += lines.length * PER_LINE + 700;
+            });
+
+            // Síntesis final del Orquestador
             setTimeout(() => {
-                const qLower = query.toLowerCase();
-                const currentP = squad.find(player => player.id === selectedPlayerId);
+                const synthesis = active.length >= 2
+                    ? `✅ Síntesis Multi-Agente completada para ${p.name}. Los ${active.length} agentes han emitido sus análisis de forma coordinada. Consulta "Planes de Entrenamiento" para el plan de acción integrado.`
+                    : `✅ Análisis completado para ${p.name}. Consulta el panel de alertas para más detalles.`;
+                appendMessage("Cerebro Orquestador — Síntesis Final", synthesis, "agent");
+            }, cumulativeDelay);
 
-                if (qLower.includes("lesion") || qLower.includes("carga") || qLower.includes("físico")) {
-                    appendMessage("Agente Físico (LSTM)", `Evaluando sensores de ${currentP.name}. Su relación de carga aguda:crónica (ACWR) se encuentra en ${currentP.acwr.toFixed(2)}. El nivel de fatiga general aconseja regular su participación táctica inmediata.`, "agent");
-                } else if (qLower.includes("recupera") || qLower.includes("nutri")) {
-                    appendMessage("Agente Nutricional", `Prescripción para ${currentP.name}: Debido al volumen de sprint y deceleraciones acumuladas, se prescribe batido recuperador rico en aminoácidos de cadena ramificada (BCAA) y carbohidratos de asimilación rápida en los próximos 45 minutos.`, "agent");
-                } else if (qLower.includes("tácti") || qLower.includes("pase") || qLower.includes("statsbomb")) {
-                    appendMessage("Agente Táctico (StatsBomb)", `Analizando datos de StatsBomb para ${currentP.name}. La fatiga física impactará directamente su precisión en transiciones en un 12%. Sugerimos reposicionamiento táctico conservador.`, "agent");
-                } else {
-                    appendMessage("Agente Físico (LSTM)", `Evaluando métricas de la plantilla. Riesgo estimado para ${currentP.name}: ${gaugeText.textContent}.`, "agent");
-                }
-
-                setTimeout(() => {
-                    appendMessage("Cerebro Orquestador - Final", "Planes de prevención adaptativos calculados y listos para consulta del staff.", "agent");
-                }, 1500);
-            }, 1000);
         }, 500);
     }
 
