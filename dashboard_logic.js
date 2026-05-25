@@ -179,6 +179,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // ── EVENTOS DE LOS SLIDERS (recalcular en tiempo real) ──
+    [acwrSlider, accSlider, decSlider, hsrSlider].forEach(slider => {
+        if (slider) slider.addEventListener("input", calculateInjuryRisk);
+    });
+    if (prevInjuryCheckbox) {
+        prevInjuryCheckbox.addEventListener("change", calculateInjuryRisk);
+    }
+
     // ── 4. CÁLCULO DE RIESGO E INTEGRACIÓN MULTI-TAB ──
     function getFormulaRisk(acwr, dec, hsr, prevInjury) {
         let baseProb = 0.03;
